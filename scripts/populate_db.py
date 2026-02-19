@@ -1,15 +1,8 @@
-from neo4j import GraphDatabase
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
-driver = GraphDatabase.driver(
-    os.getenv("NEO4J_URI"),
-    auth=(os.getenv("NEO4J_USER"), os.getenv("NEO4J_PASSWORD"))
-)
+from db.neo4j_driver import Neo4jConnection
 
 def run_query(query, params=None):
+    driver = Neo4jConnection.get_driver()
+
     with driver.session() as session:
         session.run(query, params or {})
 
@@ -206,6 +199,7 @@ DESCRIPTIONS = {
 }
 
 def update_device_descriptions():
+    driver = Neo4jConnection.get_driver()
     with driver.session() as session:
         data = [{"type": k, "desc": v} for k, v in DESCRIPTIONS.items()]
 

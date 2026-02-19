@@ -1,9 +1,5 @@
-from neo4j import GraphDatabase
 from sentence_transformers import SentenceTransformer
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
+from db.neo4j_driver import Neo4jConnection
 
 # Load model
 model = SentenceTransformer('all-MiniLM-L6-v2')
@@ -13,17 +9,13 @@ def create_embedding(text):
         text = "unknown"
     return model.encode(text).tolist()
 
-# Neo4j connection
-driver = GraphDatabase.driver(
-    os.getenv("NEO4J_URI"),
-    auth=(os.getenv("NEO4J_USER"), os.getenv("NEO4J_PASSWORD"))
-)
-
 query_text = "devices in bedroom"
 embedding = create_embedding(query_text)
 
 print("len", len(embedding))
 print("type", type(embedding))
+
+driver = Neo4jConnection.get_driver()
 
 with driver.session() as session:
     result = session.run("""

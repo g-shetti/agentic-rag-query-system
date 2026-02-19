@@ -20,13 +20,13 @@ pip install -r requirements.txt
 cp .env.example .env
 
 ### 4. Populate database
-python scripts/populate_db.py
+python -m scripts.populate_db
 
 ### 5. Generate embeddings
-python scripts/create_embeddings.py
+python -m scripts.create_embeddings
 
 ### 6. Create Vector Index
-python scripts/create_index.py
+python -m scripts.create_index
 
 ### 7. Run API
 uvicorn app.main:app --reload
@@ -34,12 +34,13 @@ uvicorn app.main:app --reload
 ### 8. Test Query
 curl -X POST http://127.0.0.1:8000/query \
   -H "Content-Type: application/json" \
-  -d '{"question": "lights in bedroom"}'
+  -d '{"question": "lights in bedroom", "include_reasoning": true}'
 
 
 ## API
 POST /query
 
 {
-  "question": "devices in bedroom"
+  "question": "devices in bedroom",
+  "include_reasoning": true
 }
