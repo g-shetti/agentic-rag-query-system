@@ -2,6 +2,7 @@ fastapi
 uvicorn
 neo4j
 python-dotenv
-google-generativeai
+google-genai
 sentence-transformers
 langgraph
+grandalf

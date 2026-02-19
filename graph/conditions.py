@@ -1,7 +1,8 @@
 def should_retry(state):
-    print("Checking if we should retry...")
-    if not state.get("data") and state.get("retries", 0) < 2:
-        state["retries"] += 1
-        print("Retrying...")
+    error = state.get("error")
+    retries = state.get("retries", 0)
+
+    if error and retries < 2:
         return "retry"
+
     return "end"

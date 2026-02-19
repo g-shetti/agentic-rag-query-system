@@ -103,7 +103,7 @@ class GeminiService:
     Cypher:
     MATCH (d:Device)
     WHERE toLower(d.location) = 'bedroom'
-    RETURN d.device_id, d.device_type, d.state
+    RETURN d.device_id, d.device_type
 
     Q: What monitors the front door?
     Cypher:
