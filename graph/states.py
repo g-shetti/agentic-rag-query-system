@@ -14,3 +14,5 @@ class GraphState(TypedDict):
     retrieved_context: Annotated[List[dict], operator.add]
 
     confidence_score: float
+    intent: str
+    is_sufficient: bool

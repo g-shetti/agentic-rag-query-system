@@ -5,7 +5,7 @@ def create_index():
 
     with driver.session() as session:
         session.run("""
-        CREATE VECTOR INDEX device_embeddings
+        CREATE VECTOR INDEX device_embeddings IF NOT EXISTS
         FOR (d:Device)
         ON d.embedding
         OPTIONS {

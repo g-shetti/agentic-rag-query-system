@@ -29,3 +29,18 @@ class GeminiService:
             contents=prompt
         )
         return response.text
+
+    def generate_text(self, prompt: str) -> str:
+        try:
+            response = self.client.models.generate_content(
+                model="gemini-flash-latest",
+                contents=prompt
+            )
+
+            if not response or not response.text:
+                raise Exception("Empty response from Gemini")
+
+            return response.text.strip()
+
+        except Exception as e:
+            raise Exception(f"Gemini text generation failed: {str(e)}")

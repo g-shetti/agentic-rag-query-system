@@ -2,17 +2,20 @@ def build_answer_prompt(question: str, data: list) -> str:
     return f"""
 You are a smart home assistant.
 
-User question:
+Answer the question using ONLY the provided data.
+
+Guidelines:
+- Be concise and clear
+- Present results as a natural sentence or bullet points if multiple items
+- Do NOT mention database, cypher, or internal processing
+- If no data is available, respond exactly: "No matching devices found"
+- Do NOT hallucinate or assume missing data
+
+Question:
 {question}
 
-Database result:
+Data:
 {data}
-
-Instructions:
-- Answer clearly in plain English
-- Do NOT mention database or cypher
-- If no data, say "No matching devices found"
-- If data exists, list devices properly
 
 Answer:
 """

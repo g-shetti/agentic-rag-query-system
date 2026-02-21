@@ -6,3 +6,4 @@ google-genai
 sentence-transformers
 langgraph
 grandalf
+langchain_google_genai

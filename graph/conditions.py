@@ -1,8 +1,8 @@
-def should_retry(state):
-    error = state.get("error")
-    retries = state.get("retries", 0)
+def route_by_intent(state):
+    return state.get("intent", "graph")
 
-    if error and retries < 2:
+
+def should_continue(state: dict) -> str:
+    if not state.get("is_sufficient", False):
         return "retry"
-
-    return "end"
+    return "answer"
