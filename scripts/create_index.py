@@ -16,7 +16,10 @@ def create_index():
         }
         """)
 
-        print("✅ Vector index created")
+        result = session.run("SHOW INDEXES YIELD name, type WHERE name = 'device_embeddings'")
+        print("Indexes:", [r.data() for r in result])
+
+        print("✅ Vector index created and verified")
 
 if __name__ == "__main__":
     create_index()

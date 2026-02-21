@@ -5,6 +5,9 @@ from dotenv import load_dotenv
 from prompts.answer_prompt import build_answer_prompt
 from prompts.cypher_prompt import build_cypher_prompt
 
+import json
+import re
+
 load_dotenv()
 
 class GeminiService:
@@ -44,3 +47,17 @@ class GeminiService:
 
         except Exception as e:
             raise Exception(f"Gemini text generation failed: {str(e)}")
+
+    def generate_structured(self, prompt: str):
+        response = self.client.models.generate_content(
+            model="gemini-flash-latest",
+            contents=prompt
+        )
+
+        text = response.text.strip()
+
+        match = re.search(r"\{.*\}", text, re.DOTALL)
+        if not match:
+            raise Exception("No JSON returned")
+
+        return json.loads(match.group(0))

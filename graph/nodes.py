@@ -1,4 +1,5 @@
 from prompts.intent_classification_prompt import build_intent_classification_prompt
+from prompts.tool_prompt import build_tool_prompt
 from services.neo4j_service import Neo4jService
 from services.gemini_service import GeminiService
 from services.embedding_service import EmbeddingService
@@ -67,19 +68,36 @@ def reason(state):
                 f"[reason] failed, fallback=graph: {str(e)}"
             ]
         }
-    
+
 def tool_router(state):
     state = init_state(state)
+    question = state["question"]
 
-    intent = state.get("intent", "graph")
+    try:
+        decision = gemini_service.generate_structured(
+            build_tool_prompt(question)
+        )
 
-    return {
-        **state,
-        "reasoning_trace": state["reasoning_trace"] + [
-            f"[router] intent={intent}"
-        ]
-    }
+        tool = decision.get("tool", "execute_cypher_query")
 
+        return {
+            **state,
+            "selected_tool": tool,
+            "tool_input": decision.get("input", {}),
+            "reasoning_trace": state["reasoning_trace"] + [
+                f"[router] selected_tool={tool}"
+            ]
+        }
+
+    except Exception as e:
+        return {
+            **state,
+            "selected_tool": "execute_cypher_query",
+            "reasoning_trace": state["reasoning_trace"] + [
+                f"[router] fallback graph: {str(e)}"
+            ]
+        }
+    
 def verify(state: dict) -> dict:
     state = init_state(state)
 

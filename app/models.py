@@ -9,6 +9,7 @@ class QueryRequest(BaseModel):
 
 class QueryResponse(BaseModel):
     answer: str
+    confidence_score: float
     reasoning_trace: Optional[List[str]] = None
     retrieved_context: Optional[List[str]] = None
-    confidence_score: float
+    

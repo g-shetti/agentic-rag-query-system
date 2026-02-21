@@ -58,18 +58,37 @@ Example:
 d.description CONTAINS 'light'
 
 6. For location queries:
-ALWAYS use:
+ALWAYS use case-insensitive match:
 toLower(d.location) = 'bedroom'
 
-7. Always return meaningful fields:
+7. ALWAYS return these fields:
 - device_id
 - location
 - state
 
-8. NEVER return entire node (avoid RETURN d)
-ALWAYS return specific fields.
+8. STATE HANDLING (VERY IMPORTANT):
+Some nodes may have missing or null state.
+ALWAYS use:
+coalesce(d.state, 'unknown') AS state
 
-9. DO NOT include explanations, comments, or text.
+9. NEVER return entire node (avoid RETURN d)
+ALWAYS return specific fields with aliases.
+
+10. ALWAYS alias outputs EXACTLY as:
+- device_id
+- location
+- state
+
+Example:
+RETURN 
+    d.device_id AS device_id,
+    d.location AS location,
+    coalesce(d.state, 'unknown') AS state
+
+11. For relationship queries:
+Return meaningful identifiers, but still include aliases.
+
+12. DO NOT include explanations, comments, or text.
 RETURN ONLY valid Cypher query.
 
 ----------------------------------------
@@ -79,31 +98,46 @@ EXAMPLES
 Q: What devices are triggered by motion sensors?
 Cypher:
 MATCH (m:Device {{device_type:'sensor'}})-[:TRIGGERS]->(d:Device)
-WHERE m.description CONTAINS 'motion'
-RETURN m.device_id, d.device_id
+WHERE toLower(m.description) CONTAINS 'motion'
+RETURN 
+    m.device_id AS device_id,
+    m.location AS location,
+    coalesce(m.state, 'unknown') AS state
 
 Q: What devices control lights?
 Cypher:
 MATCH (c:Device)-[:CONTROLS]->(l:Device)
-WHERE l.description CONTAINS 'light'
-RETURN c.device_id, l.device_id
+WHERE toLower(l.description) CONTAINS 'light'
+RETURN 
+    c.device_id AS device_id,
+    c.location AS location,
+    coalesce(c.state, 'unknown') AS state
 
 Q: What devices are in the bedroom?
 Cypher:
 MATCH (d:Device)
 WHERE toLower(d.location) = 'bedroom'
-RETURN d.device_id, d.device_type
+RETURN 
+    d.device_id AS device_id,
+    d.location AS location,
+    coalesce(d.state, 'unknown') AS state
 
 Q: What monitors the front door?
 Cypher:
 MATCH (d:Device)-[:MONITORS]->(l:Location {{name:'front door'}})
-RETURN d.device_id
+RETURN 
+    d.device_id AS device_id,
+    d.location AS location,
+    coalesce(d.state, 'unknown') AS state
 
 Q: Which sensors feed data to thermostat?
 Cypher:
 MATCH (s:Device {{device_type:'sensor'}})-[:FEEDS_DATA_TO]->(t:Device)
-WHERE t.description CONTAINS 'thermostat'
-RETURN s.device_id, t.device_id
+WHERE toLower(t.description) CONTAINS 'thermostat'
+RETURN 
+    s.device_id AS device_id,
+    s.location AS location,
+    coalesce(s.state, 'unknown') AS state
 
 ----------------------------------------
 TASK

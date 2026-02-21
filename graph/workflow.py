@@ -9,7 +9,7 @@ from graph.nodes import (
     tool_router,
     verify
 )
-from graph.conditions import route_by_intent, should_continue
+from graph.conditions import route_by_tool, should_continue
 from graph.states import GraphState
 
 def build_graph():
@@ -30,13 +30,14 @@ def build_graph():
 
     builder.add_conditional_edges(
         "router",
-        route_by_intent,
+        route_by_tool,
         {
-            "graph": "generate",
-            "semantic": "semantic",
-            "direct": "verify",
+            "execute_cypher_query": "generate",
+            "semantic_search": "semantic",
+            "get_device_state": "execute",
+            "none": "verify"
         }
-    )
+)
 
     builder.add_edge("generate", "execute")
     builder.add_edge("execute", "verify")

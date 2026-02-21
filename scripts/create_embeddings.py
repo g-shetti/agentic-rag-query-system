@@ -22,6 +22,8 @@ def update_embeddings():
             d.location AS location
         """)
 
+        batch = []
+
         for record in result:
             device_id = record["id"]
 
@@ -29,7 +31,12 @@ def update_embeddings():
             device_type = record["type"] or ""
             location = record["location"] or ""
 
-            text = f"{desc} {device_type} in {location}"
+            text = f"""
+            Device: {device_type}
+            Location: {location}
+            Description: {desc}
+            Use case: smart home automation
+            """
 
             embedding = create_embedding(text)
 
@@ -38,8 +45,16 @@ def update_embeddings():
             SET d.embedding = $embedding
             """, id=device_id, embedding=embedding)
 
+            batch.append((device_id, embedding))
+
             print(f"Updated {device_id}")
 
+        for device_id, embedding in batch:
+            session.run("""
+            MATCH (d:Device {device_id:$id})
+            SET d.embedding = $embedding
+            """, id=device_id, embedding=embedding)
+            
 if __name__ == "__main__":
     update_embeddings()
     print("Embeddings created!")
