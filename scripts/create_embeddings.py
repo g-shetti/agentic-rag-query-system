@@ -57,4 +57,4 @@ def update_embeddings():
             
 if __name__ == "__main__":
     update_embeddings()
-    print("Embeddings created!")
+    print("✅ Embeddings created!")

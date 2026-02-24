@@ -49,6 +49,12 @@ def create_devices():
         l3.state = 'off',
         l3.manufacturer = 'Philips'
 
+    MERGE (l4:Device {device_id:'light_4'})
+    SET l4.device_type = 'light',
+        l4.location = 'Hallway',
+        l4.state = 'off',
+        l4.manufacturer = 'Philips'
+        
     MERGE (m1:Device {device_id:'motion_1'})
     SET m1.device_type = 'motion_sensor',
         m1.location = 'Hallway',
@@ -154,6 +160,10 @@ def create_relationships():
         """,
         """
         MATCH (m:Device {device_id:'motion_2'}), (l:Device {device_id:'light_3'})
+        MERGE (m)-[:TRIGGERS {strength:0.9, created_at:timestamp()}]->(l)
+        """,
+        """
+        MATCH (m:Device {device_id:'motion_1'}), (l:Device {device_id:'light_4'})
         MERGE (m)-[:TRIGGERS {strength:0.9, created_at:timestamp()}]->(l)
         """,
 

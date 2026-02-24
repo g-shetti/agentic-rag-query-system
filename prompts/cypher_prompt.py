@@ -11,12 +11,25 @@ DATABASE SCHEMA
 Node: Device
 Properties:
 - device_id (string)
-- device_type (ONLY one of: 'sensor', 'actuator', 'controller')
-- location (string, e.g., 'bedroom', 'living room', 'kitchen')
+- device_type (string, examples below)
+- location (string)
 - state (string)
 - description (string)
+- manufacturer (string)
 
-Optional Node: Location
+Valid device_type values in this database include:
+- 'motion_sensor'
+- 'temperature_sensor'
+- 'humidity_sensor'
+- 'window_sensor'
+- 'light'
+- 'plug'
+- 'camera'
+- 'door_lock'
+- 'speaker'
+- 'thermostat'
+
+Node: Location
 Properties:
 - name (string)
 
@@ -28,9 +41,11 @@ Between Device nodes:
 - TRIGGERS
 - FEEDS_DATA_TO
 - CONTROLS
+- POWERS
+
+Between Device and Location:
 - MONITORS
 - SECURES
-- POWERS
 - LOCATED_IN
 - REGULATES
 
@@ -39,106 +54,87 @@ CRITICAL RULES (MUST FOLLOW)
 ----------------------------------------
 
 1. NEVER invent new node types or properties.
-2. NEVER use values outside schema.
+2. NEVER assume device_type values outside the list above.
+3. NEVER use device_type = 'sensor', 'actuator', or 'controller'.
 
-3. device_type MUST be ONLY:
-- 'sensor'
-- 'actuator'
-- 'controller'
+4. DEVICE TYPE FILTERING:
+- For sensor queries:
+  Use:
+  s.device_type ENDS WITH '_sensor'
 
-4. IMPORTANT NORMALIZATION:
-- "motion sensor", "temperature sensor", "humidity sensor" → device_type = 'sensor'
-- "light", "bulb", "lamp" → device_type = 'actuator'
-- "thermostat", "speaker" → device_type = 'controller'
+- For light queries:
+  Use:
+  d.device_type = 'light'
 
-5. If question refers to specific device (like "light", "camera"):
-DO NOT use device_type directly.
-Instead use description:
-Example:
-d.description CONTAINS 'light'
+- For thermostat queries:
+  Use:
+  d.device_type = 'thermostat'
 
-6. For location queries:
+5. LOCATION FILTERING:
 ALWAYS use case-insensitive match:
 toLower(d.location) = 'bedroom'
 
-7. ALWAYS return these fields:
+6. DO NOT use description for primary filtering if device_type is available.
+
+7. ALWAYS return EXACTLY these fields with EXACT aliases:
 - device_id
 - location
 - state
 
-8. STATE HANDLING (VERY IMPORTANT):
-Some nodes may have missing or null state.
-ALWAYS use:
-coalesce(d.state, 'unknown') AS state
-
-9. NEVER return entire node (avoid RETURN d)
-ALWAYS return specific fields with aliases.
-
-10. ALWAYS alias outputs EXACTLY as:
-- device_id
-- location
-- state
-
-Example:
-RETURN 
+Format:
+RETURN
     d.device_id AS device_id,
     d.location AS location,
     coalesce(d.state, 'unknown') AS state
 
-11. For relationship queries:
-Return meaningful identifiers, but still include aliases.
+For relationship queries, return the source device unless question asks otherwise.
 
-12. DO NOT include explanations, comments, or text.
-RETURN ONLY valid Cypher query.
+8. NEVER return entire nodes.
+9. NEVER include explanation or comments.
+10. RETURN ONLY valid Cypher query.
 
 ----------------------------------------
 EXAMPLES
 ----------------------------------------
 
-Q: What devices are triggered by motion sensors?
-Cypher:
-MATCH (m:Device {{device_type:'sensor'}})-[:TRIGGERS]->(d:Device)
-WHERE toLower(m.description) CONTAINS 'motion'
-RETURN 
-    m.device_id AS device_id,
-    m.location AS location,
-    coalesce(m.state, 'unknown') AS state
-
-Q: What devices control lights?
-Cypher:
-MATCH (c:Device)-[:CONTROLS]->(l:Device)
-WHERE toLower(l.description) CONTAINS 'light'
-RETURN 
-    c.device_id AS device_id,
-    c.location AS location,
-    coalesce(c.state, 'unknown') AS state
-
 Q: What devices are in the bedroom?
 Cypher:
 MATCH (d:Device)
 WHERE toLower(d.location) = 'bedroom'
-RETURN 
+RETURN
     d.device_id AS device_id,
     d.location AS location,
     coalesce(d.state, 'unknown') AS state
 
-Q: What monitors the front door?
+Q: Which sensors trigger lights?
 Cypher:
-MATCH (d:Device)-[:MONITORS]->(l:Location {{name:'front door'}})
-RETURN 
-    d.device_id AS device_id,
-    d.location AS location,
-    coalesce(d.state, 'unknown') AS state
-
-Q: Which sensors feed data to thermostat?
-Cypher:
-MATCH (s:Device {{device_type:'sensor'}})-[:FEEDS_DATA_TO]->(t:Device)
-WHERE toLower(t.description) CONTAINS 'thermostat'
-RETURN 
+MATCH (s:Device)-[:TRIGGERS]->(d:Device)
+WHERE s.device_type ENDS WITH '_sensor'
+  AND d.device_type = 'light'
+RETURN
     s.device_id AS device_id,
     s.location AS location,
     coalesce(s.state, 'unknown') AS state
 
+Q: Which sensors feed data to thermostat?
+Cypher:
+MATCH (s:Device)-[:FEEDS_DATA_TO]->(t:Device)
+WHERE s.device_type ENDS WITH '_sensor'
+  AND t.device_type = 'thermostat'
+RETURN
+    s.device_id AS device_id,
+    s.location AS location,
+    coalesce(s.state, 'unknown') AS state
+
+Q: Which sensors trigger the hallway lights?
+Cypher: 
+MATCH (s:Device)-[:TRIGGERS]->(d:Device)
+WHERE d.location = 'Hallway'
+RETURN s.device_id AS sensor_id,
+       d.device_id AS light_id,
+       s.location AS location,
+       coalesce(s.state, 'unknown') AS state
+       
 ----------------------------------------
 TASK
 ----------------------------------------

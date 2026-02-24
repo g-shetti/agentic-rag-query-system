@@ -28,7 +28,7 @@ def reason(state):
         return {
             **state,
             "intent": "direct",
-            "reasoning_trace": state["reasoning_trace"] + [
+            "reasoning_trace": [
                 "[reason] forced direct (retry overflow)"
             ]
         }
@@ -54,7 +54,7 @@ def reason(state):
         return {
             **state,
             "intent": intent,
-            "reasoning_trace": state["reasoning_trace"] + [
+            "reasoning_trace": [
                 f"[reason] intent={intent}, retries={retries}, observation={observation}"
             ]
         }
@@ -64,7 +64,7 @@ def reason(state):
             **state,
             "intent": "graph",
             "error": str(e),
-            "reasoning_trace": state["reasoning_trace"] + [
+            "reasoning_trace": [
                 f"[reason] failed, fallback=graph: {str(e)}"
             ]
         }
@@ -84,7 +84,7 @@ def tool_router(state):
             **state,
             "selected_tool": tool,
             "tool_input": decision.get("input", {}),
-            "reasoning_trace": state["reasoning_trace"] + [
+            "reasoning_trace": [
                 f"[router] selected_tool={tool}"
             ]
         }
@@ -93,7 +93,7 @@ def tool_router(state):
         return {
             **state,
             "selected_tool": "execute_cypher_query",
-            "reasoning_trace": state["reasoning_trace"] + [
+            "reasoning_trace": [
                 f"[router] fallback graph: {str(e)}"
             ]
         }
@@ -113,7 +113,7 @@ def verify(state: dict) -> dict:
             **state,
             "is_sufficient": True,
             "observation": "direct",
-            "reasoning_trace": state["reasoning_trace"] + [
+            "reasoning_trace": [
                 "[verify] direct intent → sufficient"
             ]
         }
@@ -124,7 +124,7 @@ def verify(state: dict) -> dict:
                 **state,
                 "is_sufficient": True,
                 "observation": "error_final",
-                "reasoning_trace": state["reasoning_trace"] + [
+                "reasoning_trace": [
                     "[verify] error but max retries reached → answer"
                 ]
             }
@@ -134,7 +134,7 @@ def verify(state: dict) -> dict:
             "is_sufficient": False,
             "observation": "error",
             "retries": retries + 1,
-            "reasoning_trace": state["reasoning_trace"] + [
+            "reasoning_trace": [
                 "[verify] error → retry"
             ]
         }
@@ -144,7 +144,7 @@ def verify(state: dict) -> dict:
             **state,
             "is_sufficient": True,
             "observation": "data_found",
-            "reasoning_trace": state["reasoning_trace"] + [
+            "reasoning_trace": [
                 f"[verify] data found ({len(data)}) → sufficient"
             ]
         }
@@ -154,7 +154,7 @@ def verify(state: dict) -> dict:
             **state,
             "is_sufficient": True,
             "observation": "no_data_final",
-            "reasoning_trace": state["reasoning_trace"] + [
+            "reasoning_trace": [
                 "[verify] no data but max retries → answer"
             ]
         }
@@ -164,7 +164,7 @@ def verify(state: dict) -> dict:
         "is_sufficient": False,
         "observation": "no_data",
         "retries": retries + 1,
-        "reasoning_trace": state["reasoning_trace"] + [
+        "reasoning_trace": [
             "[verify] no data → retry"
         ]
     }
@@ -182,12 +182,12 @@ def semantic_search(state):
             **state,
             "data": results,
             "error": None,
-            "retrieved_context": state["retrieved_context"] + [{
+            "retrieved_context": [{
                 "source": "vector",
                 "query": question,
                 "results": results
             }],
-            "reasoning_trace": state["reasoning_trace"] + [
+            "reasoning_trace": [
                 f"[semantic] retrieved={len(results)}"
             ]
         }
@@ -197,7 +197,7 @@ def semantic_search(state):
             **state,
             "data": [],
             "error": str(e),
-            "reasoning_trace": state["reasoning_trace"] + [
+            "reasoning_trace": [
                 f"[semantic] failed: {str(e)}"
             ]
         }
@@ -223,7 +223,7 @@ def generate_cypher(state):
             "cypher": cypher,
             "data": [],
             "error": None,
-            "reasoning_trace": state["reasoning_trace"] + [
+            "reasoning_trace": [
                 "[generate] cypher created"
             ]
         }
@@ -233,7 +233,7 @@ def generate_cypher(state):
             **state,
             "data": [],
             "error": str(e),
-            "reasoning_trace": state["reasoning_trace"] + [
+            "reasoning_trace": [
                 f"[generate] failed: {str(e)}"
             ]
         }
@@ -248,7 +248,7 @@ def run_query(state):
             **state,
             "data": [],
             "error": "No Cypher query",
-            "reasoning_trace": state["reasoning_trace"] + [
+            "reasoning_trace": [
                 "[execute] missing cypher"
             ]
         }
@@ -260,12 +260,12 @@ def run_query(state):
             **state,
             "data": data,
             "error": None,
-            "retrieved_context": state["retrieved_context"] + [{
+            "retrieved_context": [{
                 "source": "graph",
                 "cypher": cypher,
                 "results": data
             }],
-            "reasoning_trace": state["reasoning_trace"] + [
+            "reasoning_trace": [
                 f"[execute] retrieved={len(data)}"
             ]
         }
@@ -275,7 +275,7 @@ def run_query(state):
             **state,
             "error": str(e),
             "data": [],
-            "reasoning_trace": state["reasoning_trace"] + [
+            "reasoning_trace": [
                 f"[execute] failed: {str(e)}"
             ]
         }
@@ -297,7 +297,7 @@ def generate_answer(state):
             return {
                 **state,
                 "answer": answer,
-                "reasoning_trace": state["reasoning_trace"] + [
+                "reasoning_trace": [
                     "[answer] direct response"
                 ]
             }
@@ -306,7 +306,7 @@ def generate_answer(state):
             return {
                 **state,
                 "answer": "Hello! How can I assist you?",
-                "reasoning_trace": state["reasoning_trace"] + [
+                "reasoning_trace": [
                     "[answer] fallback direct"
                 ]
             }
@@ -315,7 +315,7 @@ def generate_answer(state):
         return {
             **state,
             "answer": f"Error: {error}",
-            "reasoning_trace": state["reasoning_trace"] + [
+            "reasoning_trace": [
                 "[answer] error fallback"
             ]
         }
@@ -326,7 +326,7 @@ def generate_answer(state):
             return {
                 **state,
                 "answer": "No matching devices found",
-                "reasoning_trace": state["reasoning_trace"] + [
+                "reasoning_trace": [
                     "[answer] no data fallback"
                 ]
             }
@@ -339,7 +339,7 @@ def generate_answer(state):
         return {
             **state,
             "answer": answer,
-            "reasoning_trace": state["reasoning_trace"] + [
+            "reasoning_trace": [
                 "[answer] generated"
             ]
         }
@@ -349,7 +349,7 @@ def generate_answer(state):
             **state,
             "error": str(e),
             "answer": "Failed to generate answer",
-            "reasoning_trace": state["reasoning_trace"] + [
+            "reasoning_trace": [
                 f"[answer] failed: {str(e)}"
             ]
         }
@@ -370,7 +370,7 @@ def compute_confidence(state):
     return {
         **state,
         "confidence_score": round(confidence, 2),
-        "reasoning_trace": state["reasoning_trace"] + [
+        "reasoning_trace": [
             f"[confidence] {round(confidence, 2)}"
         ]
     }
