@@ -11,13 +11,13 @@ DATABASE SCHEMA
 Node: Device
 Properties:
 - device_id (string)
-- device_type (string, examples below)
+- device_type (string)
 - location (string)
 - state (string)
 - description (string)
 - manufacturer (string)
 
-Valid device_type values in this database include:
+Valid device_type values:
 - 'motion_sensor'
 - 'temperature_sensor'
 - 'humidity_sensor'
@@ -38,103 +38,89 @@ RELATIONSHIPS
 ----------------------------------------
 
 Between Device nodes:
-- TRIGGERS
-- FEEDS_DATA_TO
-- CONTROLS
-- POWERS
+- TRIGGERS              (sensor → light)
+- FEEDS_DATA_TO         (sensor → thermostat)
+- CONTROLS              (controller → device)
+- POWERS                (plug → device)
 
 Between Device and Location:
-- MONITORS
-- SECURES
-- LOCATED_IN
-- REGULATES
+- MONITORS              (device → location)
+- SECURES               (device → location)
+- LOCATED_IN            (device → location)
+- REGULATES             (thermostat → location)
 
 ----------------------------------------
-CRITICAL RULES (MUST FOLLOW)
+CRITICAL RULES (STRICT)
 ----------------------------------------
 
-1. NEVER invent new node types or properties.
-2. NEVER assume device_type values outside the list above.
+1. NEVER invent new node labels, properties, or relationships.
+2. ONLY use device_type values listed above.
 3. NEVER use device_type = 'sensor', 'actuator', or 'controller'.
+4. DO NOT use description for filtering if device_type is available.
+5. ALWAYS use case-insensitive location filtering:
 
-4. DEVICE TYPE FILTERING:
-- For sensor queries:
-  Use:
+   toLower(d.location) = toLower('<location_from_question>')
+
+----------------------------------------
+DEVICE TYPE FILTERING RULES
+----------------------------------------
+
+• Sensor queries:
   s.device_type ENDS WITH '_sensor'
 
-- For light queries:
-  Use:
+• Light queries:
   d.device_type = 'light'
 
-- For thermostat queries:
-  Use:
+• Thermostat queries:
   d.device_type = 'thermostat'
 
-5. LOCATION FILTERING:
-ALWAYS use case-insensitive match:
-toLower(d.location) = 'bedroom'
-
-6. DO NOT use description for primary filtering if device_type is available.
-
-7. ALWAYS return EXACTLY these fields with EXACT aliases:
-- device_id
-- location
-- state
-
-Format:
-RETURN
-    d.device_id AS device_id,
-    d.location AS location,
-    coalesce(d.state, 'unknown') AS state
-
-For relationship queries, return the source device unless question asks otherwise.
-
-8. NEVER return entire nodes.
-9. NEVER include explanation or comments.
-10. RETURN ONLY valid Cypher query.
-
 ----------------------------------------
-EXAMPLES
+RETURN RULES (DETERMINISTIC)
 ----------------------------------------
 
-Q: What devices are in the bedroom?
-Cypher:
-MATCH (d:Device)
-WHERE toLower(d.location) = 'bedroom'
-RETURN
-    d.device_id AS device_id,
-    d.location AS location,
-    coalesce(d.state, 'unknown') AS state
+1. Device-only queries:
+   RETURN
+       d.device_id AS device_id,
+       d.location AS location,
+       coalesce(d.state, 'unknown') AS state
 
-Q: Which sensors trigger lights?
-Cypher:
-MATCH (s:Device)-[:TRIGGERS]->(d:Device)
-WHERE s.device_type ENDS WITH '_sensor'
-  AND d.device_type = 'light'
-RETURN
-    s.device_id AS device_id,
-    s.location AS location,
-    coalesce(s.state, 'unknown') AS state
+2. Relationship queries between two devices:
+   - Return BOTH devices using role-based aliases.
+   - Include source device location and state.
 
-Q: Which sensors feed data to thermostat?
-Cypher:
-MATCH (s:Device)-[:FEEDS_DATA_TO]->(t:Device)
-WHERE s.device_type ENDS WITH '_sensor'
-  AND t.device_type = 'thermostat'
-RETURN
-    s.device_id AS device_id,
-    s.location AS location,
-    coalesce(s.state, 'unknown') AS state
-
-Q: Which sensors trigger the hallway lights?
-Cypher: 
-MATCH (s:Device)-[:TRIGGERS]->(d:Device)
-WHERE d.location = 'Hallway'
-RETURN s.device_id AS sensor_id,
+   Example format:
+   RETURN
+       s.device_id AS sensor_id,
        d.device_id AS light_id,
        s.location AS location,
        coalesce(s.state, 'unknown') AS state
-       
+
+3. Relationship queries between device and location:
+   RETURN
+       d.device_id AS device_id,
+       l.name AS location
+
+4. NEVER return entire nodes.
+5. NEVER include explanation or comments.
+6. RETURN ONLY valid Cypher.
+7. For relationship queries:
+   - Return attributes of the TARGET device unless the question explicitly asks about the source.
+   - The entity being listed in the question determines which node’s location and state to return.
+
+----------------------------------------
+SEMANTIC MAPPING
+----------------------------------------
+
+If question mentions:
+- "trigger" → use TRIGGERS
+- "feed data" → use FEEDS_DATA_TO
+- "control" → use CONTROLS
+- "power" → use POWERS
+- "monitor" → use MONITORS
+- "secure" → use SECURES
+- "located in" → use LOCATED_IN
+- "regulate" → use REGULATES
+
 ----------------------------------------
 TASK
 ----------------------------------------

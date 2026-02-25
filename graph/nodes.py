@@ -4,8 +4,6 @@ from services.neo4j_service import Neo4jService
 from services.gemini_service import GeminiService
 from services.embedding_service import EmbeddingService
 
-embedding_service = EmbeddingService()
-
 neo4j_service = Neo4jService()
 gemini_service = GeminiService()
 
@@ -175,7 +173,7 @@ def semantic_search(state):
     question = state["question"]
 
     try:
-        embedding = embedding_service.embed(question)
+        embedding = EmbeddingService().embed(question)
         results = neo4j_service.vector_search(embedding)
 
         return {
