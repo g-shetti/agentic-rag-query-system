@@ -1,14 +1,16 @@
-from sentence_transformers import SentenceTransformer
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
+import os
+
 class EmbeddingService:
     _model = None
 
     def __init__(self):
         if EmbeddingService._model is None:
-            EmbeddingService._model = SentenceTransformer(
-                "all-MiniLM-L6-v2",
-                device="cpu"
+            EmbeddingService._model = GoogleGenerativeAIEmbeddings(
+                model="models/embedding-001",
+                google_api_key=os.getenv("GEMINI_API_KEY")
             )
         self.model = EmbeddingService._model
 
     def embed(self, text: str):
-        return self.model.encode(text).tolist()
+        return self.model.embed_query(text)

@@ -1,13 +1,8 @@
-from sentence_transformers import SentenceTransformer
+from services.embedding_service import EmbeddingService
 from db.neo4j_driver import Neo4jConnection
 
-# Load model
-model = SentenceTransformer('all-MiniLM-L6-v2')
+embedding_service = EmbeddingService()
 
-def create_embedding(text):
-    if not text:
-        text = "unknown device"   # fallback
-    return model.encode(text).tolist()
 
 def update_embeddings():
     driver = Neo4jConnection.get_driver()
@@ -21,8 +16,6 @@ def update_embeddings():
             d.device_type AS type,
             d.location AS location
         """)
-
-        batch = []
 
         for record in result:
             device_id = record["id"]
@@ -38,23 +31,17 @@ def update_embeddings():
             Use case: smart home automation
             """
 
-            embedding = create_embedding(text)
+            embedding = embedding_service.embed(text)
 
             session.run("""
             MATCH (d:Device {device_id:$id})
             SET d.embedding = $embedding
             """, id=device_id, embedding=embedding)
-
-            batch.append((device_id, embedding))
 
             print(f"Updated {device_id}")
 
-        for device_id, embedding in batch:
-            session.run("""
-            MATCH (d:Device {device_id:$id})
-            SET d.embedding = $embedding
-            """, id=device_id, embedding=embedding)
-            
+    print("✅ Embeddings created!")
+
+
 if __name__ == "__main__":
     update_embeddings()
-    print("✅ Embeddings created!")
